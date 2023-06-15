@@ -12,7 +12,6 @@ import {
   Inter_700Bold
 } from '@expo-google-fonts/inter'
 
-
 export default function App() {
   const [hasLoadedFonts] = useFonts({
     Roboto_400Regular,

@@ -2,7 +2,16 @@ import { useEffect, useState } from 'react'
 import { Text, View } from 'react-native'
 
 import * as Battery from 'expo-battery'
+import * as Notifications from 'expo-notifications'
 import { Feather } from '@expo/vector-icons'
+
+Notifications.setNotificationHandler({
+  handleNotification: async () => ({
+    shouldShowAlert: true,
+    shouldPlaySound: true,
+    shouldSetBadge: false,
+  }),
+})
 
 export default function Home() {
   const [batteryLevel, setBatteryLevel] = useState(null)
@@ -23,13 +32,72 @@ export default function Home() {
     fetchBatteryData()
   }, [])
 
-  let displayedBatteryLevel = ''
-  if (batteryLevel !== null) {
-    displayedBatteryLevel = (batteryLevel * 100)
-      .toFixed(0)
-      .toString()
-      .substring(0, 2)
+  let displayedBatteryLevel = null
+    if (batteryLevel !== null) {
+      displayedBatteryLevel = Math.round(batteryLevel * 100)
+    }
+
+  const sendNotifications = async (notifications) => {
+    for (const notification of notifications) {
+      await Notifications.scheduleNotificationAsync(notification)
+    }
   }
+
+  const generateNotification = (title, body, trigger) => {
+    return {
+      content: {
+        title,
+        body,
+      },
+      trigger,
+    }
+  }
+
+  const monitorBattery = async () => {
+    const lowBattery = 20
+    const fullBattery = 100
+    const recommendedBattery = 80
+
+    let batteryNotification = null
+
+    switch (true) {
+      case displayedBatteryLevel <= lowBattery && !isCharging:
+        batteryNotification = generateNotification(
+          'Bateria baixa!',
+          'Conecte o celular ao carregador.',
+          null,
+        )
+        await sendNotifications([batteryNotification])
+        console.log('bateria baixa')
+        break
+      case displayedBatteryLevel === fullBattery && isCharging:
+        batteryNotification = generateNotification(
+          'Bateria cheia!',
+          'Retire o celular do carregador.',
+          null,
+        )
+        await sendNotifications([batteryNotification])
+        console.log('bateria cheia')
+        break
+      case displayedBatteryLevel > recommendedBattery && displayedBatteryLevel < fullBattery && isCharging:
+        batteryNotification = generateNotification(
+          'Nível recomendado atingido!',
+          'Retire o celular do carregador para preservar a vida útil da bateria.',
+          null,
+        )
+        await sendNotifications([batteryNotification])
+        console.log('bateria recomendada')
+        break
+      default:
+        break
+    }
+  }
+
+  useEffect(() => {
+    if (batteryLevel !== null && isCharging !== null) {
+      monitorBattery(displayedBatteryLevel)
+    }
+  }, [batteryLevel, isCharging])
 
   return (
     <View className="flex-1 bg-gray-800">

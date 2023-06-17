@@ -16,10 +16,12 @@ Notifications.setNotificationHandler({
 export default function Home() {
   const [batteryLevel, setBatteryLevel] = useState(null)
   const [isCharging, setIsCharging] = useState(null)
+  const [displayedBatteryLevel, setDisplayedBatteryLevel] = useState(null)
 
   useEffect(() => {
     const fetchBatteryData = async () => {
       const level = await Battery.getBatteryLevelAsync()
+      console.log('Battery Level:', level)
       setBatteryLevel(level)
 
       const batteryState = await Battery.getBatteryStateAsync()
@@ -30,12 +32,28 @@ export default function Home() {
     }
 
     fetchBatteryData()
-  }, [])
 
-  let displayedBatteryLevel = null
-    if (batteryLevel !== null) {
-      displayedBatteryLevel = Math.round(batteryLevel * 100)
+    const batteryLevelListener = Battery.addBatteryLevelListener(
+      ({ batteryLevel }) => setBatteryLevel(batteryLevel),
+    )
+
+    const batteryStateListener = Battery.addBatteryStateListener(
+      ({ isCharging }) => setIsCharging(isCharging),
+    )
+
+    return () => {
+      batteryLevelListener.remove()
+      batteryStateListener.remove()
     }
+  }, [batteryLevel, isCharging])
+
+  useEffect(() => {
+    if (batteryLevel !== null) {
+      const displayedLevel = Math.round(batteryLevel * 100)
+      console.log('Battery Level:', displayedLevel)
+      setDisplayedBatteryLevel(displayedLevel)
+    }
+  }, [batteryLevel])
 
   const sendNotifications = async (notifications) => {
     for (const notification of notifications) {
@@ -79,7 +97,9 @@ export default function Home() {
         await sendNotifications([batteryNotification])
         console.log('bateria cheia')
         break
-      case displayedBatteryLevel > recommendedBattery && displayedBatteryLevel < fullBattery && isCharging:
+      case displayedBatteryLevel > recommendedBattery &&
+        displayedBatteryLevel < fullBattery &&
+        isCharging:
         batteryNotification = generateNotification(
           'Nível recomendado atingido!',
           'Retire o celular do carregador para preservar a vida útil da bateria.',
@@ -95,9 +115,9 @@ export default function Home() {
 
   useEffect(() => {
     if (batteryLevel !== null && isCharging !== null) {
-      monitorBattery(displayedBatteryLevel)
+      monitorBattery()
     }
-  }, [batteryLevel, isCharging])
+  })
 
   return (
     <View className="flex-1 bg-gray-800">

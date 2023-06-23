@@ -15,13 +15,15 @@ Notifications.setNotificationHandler({
 
 export default function Home() {
   const [batteryLevel, setBatteryLevel] = useState(null)
-  const [isCharging, setIsCharging] = useState(null)
+  const [isCharging, setIsCharging] = useState(Battery.BatteryState.UNKNOWN)
   const [displayedBatteryLevel, setDisplayedBatteryLevel] = useState(null)
+  const [notificationSentLow, setNotificationSentLow] = useState(false)
+  const [notificationSentFull, setNotificationSentFull] = useState(false)
+  const [notificationSentRec, setNotificationSentRec] = useState(false)
 
   useEffect(() => {
     const fetchBatteryData = async () => {
       const level = await Battery.getBatteryLevelAsync()
-      console.log('Battery Level:', level)
       setBatteryLevel(level)
 
       const batteryState = await Battery.getBatteryStateAsync()
@@ -38,19 +40,18 @@ export default function Home() {
     )
 
     const batteryStateListener = Battery.addBatteryStateListener(
-      ({ isCharging }) => setIsCharging(isCharging),
+      ({ batteryState }) => setIsCharging(batteryState),
     )
 
     return () => {
-      batteryLevelListener.remove()
-      batteryStateListener.remove()
+      batteryLevelListener && batteryLevelListener.remove()
+      batteryStateListener && batteryStateListener.remove()
     }
   }, [batteryLevel, isCharging])
 
   useEffect(() => {
     if (batteryLevel !== null) {
       const displayedLevel = Math.round(batteryLevel * 100)
-      console.log('Battery Level:', displayedLevel)
       setDisplayedBatteryLevel(displayedLevel)
     }
   }, [batteryLevel])
@@ -78,38 +79,46 @@ export default function Home() {
 
     let batteryNotification = null
 
-    switch (true) {
-      case displayedBatteryLevel <= lowBattery && !isCharging:
-        batteryNotification = generateNotification(
-          'Bateria baixa!',
-          'Conecte o celular ao carregador.',
-          null,
-        )
-        await sendNotifications([batteryNotification])
-        console.log('bateria baixa')
-        break
-      case displayedBatteryLevel === fullBattery && isCharging:
-        batteryNotification = generateNotification(
-          'Bateria cheia!',
-          'Retire o celular do carregador.',
-          null,
-        )
-        await sendNotifications([batteryNotification])
-        console.log('bateria cheia')
-        break
-      case displayedBatteryLevel > recommendedBattery &&
-        displayedBatteryLevel < fullBattery &&
-        isCharging:
-        batteryNotification = generateNotification(
-          'Nível recomendado atingido!',
-          'Retire o celular do carregador para preservar a vida útil da bateria.',
-          null,
-        )
-        await sendNotifications([batteryNotification])
-        console.log('bateria recomendada')
-        break
-      default:
-        break
+    if (
+      displayedBatteryLevel <= lowBattery &&
+      !isCharging &&
+      !notificationSentLow
+    ) {
+      batteryNotification = generateNotification(
+        'Bateria baixa!',
+        'Conecte o celular ao carregador.',
+        null,
+      )
+      await sendNotifications([batteryNotification])
+      setNotificationSentLow(true)
+    }
+
+    if (
+      displayedBatteryLevel === fullBattery &&
+      isCharging &&
+      !notificationSentFull
+    ) {
+      batteryNotification = generateNotification(
+        'Bateria cheia!',
+        'Retire o celular do carregador.',
+        null,
+      )
+      await sendNotifications([batteryNotification])
+      setNotificationSentFull(true)
+    }
+
+    if (
+      displayedBatteryLevel === recommendedBattery &&
+      isCharging &&
+      !notificationSentRec
+    ) {
+      batteryNotification = generateNotification(
+        'Nível recomendado atingido!',
+        'Retire o celular do carregador para preservar a vida útil da bateria.',
+        null,
+      )
+      await sendNotifications([batteryNotification])
+      setNotificationSentRec(true)
     }
   }
 

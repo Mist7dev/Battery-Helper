@@ -108,7 +108,7 @@ export default function Home() {
     }
 
     if (
-      displayedBatteryLevel === recommendedBattery &&
+      displayedBatteryLevel >= recommendedBattery &&
       isCharging &&
       !notificationSentRec
     ) {

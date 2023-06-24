@@ -1,4 +1,4 @@
-![image](./assets/banner.png)
+![image](https://github.com/matheusc1/battery-helper/blob/main/assets/banner.png)
 
 # Battery Helper
 
@@ -53,7 +53,7 @@ Este é um projeto simples feito para fins de aprendizagem. Se você gostaria de
 
 ## Layout 🎨
 
-[Figma](https://www.figma.com/file/ymVMgjREUDaB64PcHBPB8l/Battery-Helper?type=design&node-id=57-2&mode=design&t=xdLNIx5XvqsMdDzA-0)
+[Figma](https://www.figma.com/file/ymVMgjREUDaB64PcHBPB8l/Battery-Helper?type=design&node-id=0-1&mode=design&t=NUPxUEc40glG3Gow-0)
 
 ## Licença 📃
 
